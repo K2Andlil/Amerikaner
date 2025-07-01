@@ -53,6 +53,8 @@ header {
     border-radius: 15px;
     padding: 20px;
     backdrop-filter: blur(10px);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
 }
 
 .player-header {
@@ -243,9 +245,20 @@ header {
     gap: 5px;
 }
 
+/* Updated current player styling with blue border */
 .current-player {
-    background: rgba(255, 193, 7, 0.3) !important;
-    border: 2px solid #FFC107;
+    border: 3px solid #2196F3 !important;
+    background: rgba(33, 150, 243, 0.2) !important;
+    box-shadow: 0 0 20px rgba(33, 150, 243, 0.5);
+    transform: scale(1.02);
+}
+
+/* Current bidder styling during bidding phase */
+.current-bidder {
+    border: 3px solid #2196F3 !important;
+    background: rgba(33, 150, 243, 0.2) !important;
+    box-shadow: 0 0 20px rgba(33, 150, 243, 0.5);
+    transform: scale(1.02);
 }
 
 .team-bidder {
@@ -343,5 +356,11 @@ select {
         left: 10px;
         font-size: 0.7rem;
         padding: 2px 6px;
+    }
+
+    /* Adjust scaling for mobile */
+    .current-player,
+    .current-bidder {
+        transform: scale(1.01);
     }
 }

@@ -493,11 +493,14 @@ class Game {
                 });
             }
             
-            // Highlight current player
+            // Clear all highlighting first
             const playerSection = document.getElementById(`player-${playerId}`);
-            playerSection.classList.remove('current-player', 'team-bidder', 'team-partner', 'team-opponent');
+            playerSection.classList.remove('current-player', 'current-bidder', 'team-bidder', 'team-partner', 'team-opponent');
             
-            if ((this.phase === 'playing' || this.phase === 'partner_selection') && this.currentPlayer === playerId) {
+            // Highlight current player or bidder based on phase
+            if (this.phase === 'bidding' && this.currentBidder === playerId) {
+                playerSection.classList.add('current-bidder');
+            } else if ((this.phase === 'playing' || this.phase === 'partner_selection') && this.currentPlayer === playerId) {
                 playerSection.classList.add('current-player');
             }
             
