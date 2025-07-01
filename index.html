@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amerikaner - Test Spillogikk</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🇺🇸 Amerikaner - Spillogikk Test</h1>
+            <p>Kontroller alle 4 spillere for å teste spillogikken</p>
+        </header>
+
+        <div class="phase-indicator" id="phase-indicator">
+            Laster spillet...
+        </div>
+
+        <div class="game-info">
+            <div class="info-panel">
+                <strong>Trumf:</strong> <span id="trump-display">-</span>
+            </div>
+            <div class="info-panel">
+                <strong>Høyeste bud:</strong> <span id="highest-bid">-</span>
+            </div>
+            <div class="info-panel">
+                <strong>Runde:</strong> <span id="current-round">1</span>
+            </div>
+            <div class="info-panel">
+                <strong>Kort igjen:</strong> <span id="cards-left">52</span>
+            </div>
+        </div>
+
+        <!-- Bidding Controls -->
+        <div class="controls" id="bidding-controls">
+            <h3>Budgivning - <span id="current-bidder">Spiller 1</span> sin tur</h3>
+            <div class="bid-buttons">
+                <button class="btn primary bid-btn" data-bid="7">7</button>
+                <button class="btn primary bid-btn" data-bid="8">8</button>
+                <button class="btn primary bid-btn" data-bid="9">9</button>
+                <button class="btn primary bid-btn" data-bid="10">10</button>
+                <button class="btn primary bid-btn" data-bid="11">11</button>
+                <button class="btn primary bid-btn" data-bid="12">12</button>
+                <button class="btn primary bid-btn" data-bid="13">13</button>
+                <button class="btn secondary pass-btn">Pass</button>
+            </div>
+        </div>
+
+        <!-- Trump Selection Controls -->
+        <div class="controls hidden" id="trump-controls">
+            <h3>Velg trumf og partner - <span id="trump-winner">Spiller X</span> vant med <span id="winning-bid">X</span></h3>
+            <div class="suit-buttons">
+                <button class="suit-btn" data-suit="hearts">♥️ Hjerter</button>
+                <button class="suit-btn" data-suit="diamonds">♦️ Ruter</button>
+                <button class="suit-btn" data-suit="clubs">♣️ Kløver</button>
+                <button class="suit-btn" data-suit="spades">♠️ Spar</button>
+            </div>
+            <div style="margin-top: 15px;">
+                <label>Be om kort:</label>
+                <select id="request-suit">
+                    <option value="hearts">♥️ Hjerter</option>
+                    <option value="diamonds">♦️ Ruter</option>
+                    <option value="clubs">♣️ Kløver</option>
+                    <option value="spades">♠️ Spar</option>
+                </select>
+                <select id="request-rank">
+                    <option value="14">Ess</option>
+                    <option value="13">Konge</option>
+                    <option value="12">Dame</option>
+                    <option value="11">Knekt</option>
+                    <option value="10">10</option>
+                    <option value="9">9</option>
+                    <option value="8">8</option>
+                    <option value="7">7</option>
+                </select>
+                <button class="btn primary" id="confirm-trump">Bekreft</button>
+            </div>
+        </div>
+
+        <!-- Playing Controls -->
+        <div class="controls hidden" id="playing-controls">
+            <h3>Spilling - <span id="current-player-name">Spiller 1</span> sin tur</h3>
+            <p>Klikk på et kort fra spilleren som har tur</p>
+        </div>
+
+        <!-- Trick Area -->
+        <div class="trick-area">
+            <h3>Gjeldende stikk</h3>
+            <div class="played-cards" id="played-cards">
+                <!-- Played cards will appear here -->
+            </div>
+        </div>
+
+        <!-- Players -->
+        <div class="players-grid">
+            <div class="player-section" id="player-0">
+                <div class="player-header">
+                    <div class="player-name">Spiller 1</div>
+                    <div class="player-stats">Stikk: <span class="tricks">0</span> | Poeng: <span class="score">0</span></div>
+                </div>
+                <div class="hand-cards" data-player="0">
+                    <!-- Cards will be populated here -->
+                </div>
+            </div>
+
+            <div class="player-section" id="player-1">
+                <div class="player-header">
+                    <div class="player-name">Spiller 2</div>
+                    <div class="player-stats">Stikk: <span class="tricks">0</span> | Poeng: <span class="score">0</span></div>
+                </div>
+                <div class="hand-cards" data-player="1">
+                    <!-- Cards will be populated here -->
+                </div>
+            </div>
+
+            <div class="player-section" id="player-2">
+                <div class="player-header">
+                    <div class="player-name">Spiller 3</div>
+                    <div class="player-stats">Stikk: <span class="tricks">0</span> | Poeng: <span class="score">0</span></div>
+                </div>
+                <div class="hand-cards" data-player="2">
+                    <!-- Cards will be populated here -->
+                </div>
+            </div>
+
+            <div class="player-section" id="player-3">
+                <div class="player-header">
+                    <div class="player-name">Spiller 4</div>
+                    <div class="player-stats">Stikk: <span class="tricks">0</span> | Poeng: <span class="score">0</span></div>
+                </div>
+                <div class="hand-cards" data-player="3">
+                    <!-- Cards will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Round End -->
+        <div class="controls hidden" id="round-end-controls">
+            <h3>Runde ferdig!</h3>
+            <p id="round-results"></p>
+            <button class="btn primary" id="next-round">Neste runde</button>
+            <button class="btn secondary" id="new-game">Nytt spill</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
