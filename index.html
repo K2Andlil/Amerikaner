@@ -22,9 +22,6 @@
             <div class="info-panel">
                 <strong>Runde:</strong> <span id="current-round">1</span>
             </div>
-            <div class="info-panel">
-                <strong>Kort igjen:</strong> <span id="cards-left">52</span>
-            </div>
         </div>
 
         <!-- Bidding Controls -->
@@ -46,16 +43,13 @@
         <div class="controls hidden" id="partner-controls">
             <h3>Velg partner - <span id="partner-winner">Spiller X</span></h3>
             <p>Du satte trumf til <span id="trump-suit-display">-</span>. Velg hvilket kort du vil ha som partner:</p>
-            <div class="partner-selection" id="partner-card-buttons">
-                <!-- Partner card buttons will be populated here -->
-            </div>
+            <div class="partner-selection" id="partner-card-buttons"></div>
             <button class="btn primary hidden" id="confirm-partner">Bekreft partner</button>
         </div>
 
         <!-- Playing Controls -->
         <div class="controls hidden" id="playing-controls">
             <h3>Spilling - <span id="current-player-name">Spiller 1</span> sin tur</h3>
-            <p>Klikk på et kort fra spilleren som har tur</p>
             <div id="partner-card-warning" class="partner-warning hidden">
                 <strong>OBS!</strong> Partneren må spille det forespurte kortet: <span id="requested-card-display"></span>
             </div>
@@ -64,9 +58,7 @@
         <!-- Trick Area -->
         <div class="trick-area">
             <h3>Gjeldende stikk</h3>
-            <div class="played-cards" id="played-cards">
-                <!-- Played cards will appear here -->
-            </div>
+            <div class="played-cards" id="played-cards"></div>
         </div>
 
         <!-- Players -->
@@ -77,9 +69,7 @@
                     <div class="team-indicator hidden" id="team-indicator-0"></div>
                     <div class="player-stats">Stikk: <span class="tricks">0</span> | Poeng: <span class="score">0</span></div>
                 </div>
-                <div class="hand-cards" data-player="0">
-                    <!-- Cards will be populated here -->
-                </div>
+                <div class="hand-cards" data-player="0"></div>
             </div>
 
             <div class="player-section" id="player-1">
@@ -88,9 +78,7 @@
                     <div class="team-indicator hidden" id="team-indicator-1"></div>
                     <div class="player-stats">Stikk: <span class="tricks">0</span> | Poeng: <span class="score">0</span></div>
                 </div>
-                <div class="hand-cards" data-player="1">
-                    <!-- Cards will be populated here -->
-                </div>
+                <div class="hand-cards" data-player="1"></div>
             </div>
 
             <div class="player-section" id="player-2">
@@ -99,9 +87,7 @@
                     <div class="team-indicator hidden" id="team-indicator-2"></div>
                     <div class="player-stats">Stikk: <span class="tricks">0</span> | Poeng: <span class="score">0</span></div>
                 </div>
-                <div class="hand-cards" data-player="2">
-                    <!-- Cards will be populated here -->
-                </div>
+                <div class="hand-cards" data-player="2"></div>
             </div>
 
             <div class="player-section" id="player-3">
@@ -110,9 +96,7 @@
                     <div class="team-indicator hidden" id="team-indicator-3"></div>
                     <div class="player-stats">Stikk: <span class="tricks">0</span> | Poeng: <span class="score">0</span></div>
                 </div>
-                <div class="hand-cards" data-player="3">
-                    <!-- Cards will be populated here -->
-                </div>
+                <div class="hand-cards" data-player="3"></div>
             </div>
         </div>
 

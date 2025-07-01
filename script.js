@@ -4,12 +4,6 @@ class Card {
         this.rank = rank;
     }
 
-    toString() {
-        const rankNames = {11: 'J', 12: 'Q', 13: 'K', 14: 'A'};
-        const rankStr = rankNames[this.rank] || this.rank.toString();
-        return `${rankStr} of ${this.suit}`;
-    }
-
     toDict() {
         return {suit: this.suit, rank: this.rank};
     }
@@ -35,7 +29,6 @@ class Game {
         this.trumpCardRequest = null;
         this.teams = {};
         this.currentTrick = [];
-        this.trickStarter = null;
         this.tricksWon = {};
         this.scores = {};
         this.currentPlayer = 0;
@@ -44,7 +37,6 @@ class Game {
         this.selectedPartnerCard = null;
         this.firstCardPlayed = false;
         this.waitingForPartner = false;
-        this.partnerPlayedRequestedCard = false;
         this.partnerId = null;
 
         // Initialize scores and tricks
@@ -79,7 +71,7 @@ class Game {
                 this.hands[playerId].push(this.deck.pop());
             }
         }
-        // Sort hands with new order: diamonds, spades, hearts, clubs
+        // Sort hands
         Object.keys(this.hands).forEach(playerId => {
             this.hands[playerId].sort((a, b) => {
                 if (a.suit !== b.suit) {
@@ -126,7 +118,6 @@ class Game {
             if (this.highestBidder !== null) {
                 this.phase = 'playing';
                 this.currentPlayer = this.highestBidder;
-                this.trickStarter = this.currentPlayer;
                 this.firstCardPlayed = false;
             } else {
                 // All passed, redeal
@@ -191,7 +182,7 @@ class Game {
         );
     }
 
-        playCard(playerId, cardData) {
+    playCard(playerId, cardData) {
         if (playerId !== this.currentPlayer) return false;
 
         // Block card playing during partner selection phase
@@ -235,10 +226,6 @@ class Game {
                 playerName: this.players[playerId].name
             });
 
-            // DON'T advance to next player yet - wait for partner selection
-            // this.currentPlayer = (this.currentPlayer + 1) % 4;
-            
-            // Show partner selection and STOP here
             this.phase = 'partner_selection';
             this.updateDisplay();
             this.showPartnerSelection();
@@ -253,7 +240,6 @@ class Game {
             cardToPlay.rank === this.trumpCardRequest.rank) {
             
             this.waitingForPartner = false;
-            this.partnerPlayedRequestedCard = true;
         }
 
         // Validate play (must follow suit if possible)
@@ -381,7 +367,6 @@ class Game {
 
         // Set next starter
         this.currentPlayer = winnerPlay.playerId;
-        this.trickStarter = this.currentPlayer;
 
         // Reset for next trick
         this.currentTrick = [];
@@ -451,7 +436,6 @@ class Game {
         this.selectedPartnerCard = null;
         this.firstCardPlayed = false;
         this.waitingForPartner = false;
-        this.partnerPlayedRequestedCard = false;
         this.partnerId = null;
         
         this.startGame();
@@ -483,9 +467,6 @@ class Game {
         document.getElementById('highest-bid').textContent = this.highestBidder !== null ? 
             this.highestBid : '-';
         document.getElementById('current-round').textContent = this.currentRound;
-        
-        const totalCards = Object.values(this.hands).reduce((sum, hand) => sum + hand.length, 0);
-        document.getElementById('cards-left').textContent = totalCards;
     }
 
     updatePlayerHands() {

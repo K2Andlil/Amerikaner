@@ -5,7 +5,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: #fff;
     min-height: 100vh;
@@ -44,7 +44,6 @@ body {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 15px;
-    backdrop-filter: blur(10px);
     border: 2px solid transparent;
     transition: all 0.3s ease;
 }
@@ -131,12 +130,6 @@ body {
     box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
 }
 
-.card.selected {
-    transform: translateY(-5px);
-    border-color: #FF9800;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
-}
-
 .card.forced {
     border-color: #FF5722;
     box-shadow: 0 0 12px rgba(255, 87, 34, 0.7);
@@ -154,16 +147,6 @@ body {
 
 .card.clubs, .card.spades {
     color: #2c3e50;
-}
-
-.card-rank {
-    font-size: 1.4rem;
-    line-height: 1;
-}
-
-.card-suit {
-    font-size: 1.6rem;
-    line-height: 1;
 }
 
 .controls {
@@ -265,16 +248,7 @@ body {
     gap: 4px;
 }
 
-/* Updated current player styling with blue border */
-.current-player {
-    border: 3px solid #2196F3 !important;
-    background: rgba(33, 150, 243, 0.2) !important;
-    box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
-    transform: scale(1.01);
-}
-
-/* Current bidder styling during bidding phase */
-.current-bidder {
+.current-player, .current-bidder {
     border: 3px solid #2196F3 !important;
     background: rgba(33, 150, 243, 0.2) !important;
     box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
@@ -299,15 +273,6 @@ body {
 
 .hidden {
     display: none;
-}
-
-select {
-    padding: 6px;
-    margin: 4px;
-    border: none;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.9);
-    color: #333;
 }
 
 .phase-indicator {
@@ -340,14 +305,6 @@ select {
         font-size: 1.2rem;
     }
 
-    .card-rank {
-        font-size: 1.2rem;
-    }
-
-    .card-suit {
-        font-size: 1.4rem;
-    }
-
     .team-indicator {
         font-size: 0.6rem;
         padding: 2px 5px;
@@ -363,9 +320,7 @@ select {
         font-size: 0.8rem;
     }
 
-    /* Adjust scaling for mobile */
-    .current-player,
-    .current-bidder {
+    .current-player, .current-bidder {
         transform: scale(1.005);
     }
 }
