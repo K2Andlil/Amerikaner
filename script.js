@@ -38,6 +38,7 @@ class Game {
         this.firstCardPlayed = false;
         this.waitingForPartner = false;
         this.partnerId = null;
+        this.dealingInProgress = false;
 
         // Initialize scores and tricks
         this.players.forEach(player => {
@@ -64,14 +65,28 @@ class Game {
         return deck;
     }
 
-    dealCards() {
+    async dealCards() {
+        this.dealingInProgress = true;
         this.hands = {0: [], 1: [], 2: [], 3: []};
-        for (let i = 0; i < 13; i++) {
+        
+        // Clear existing cards
+        for (let playerId = 0; playerId < 4; playerId++) {
+            const handContainer = document.querySelector(`[data-player="${playerId}"]`);
+            handContainer.innerHTML = '';
+        }
+
+        // Deal cards with animation
+        for (let cardIndex = 0; cardIndex < 13; cardIndex++) {
             for (let playerId = 0; playerId < 4; playerId++) {
-                this.hands[playerId].push(this.deck.pop());
+                const card = this.deck.pop();
+                this.hands[playerId].push(card);
+                
+                // Create animated dealing card
+                await this.animateCardDeal(card, playerId, cardIndex);
             }
         }
-        // Sort hands
+
+        // Sort hands after dealing
         Object.keys(this.hands).forEach(playerId => {
             this.hands[playerId].sort((a, b) => {
                 if (a.suit !== b.suit) {
@@ -81,10 +96,58 @@ class Game {
                 return a.rank - b.rank;
             });
         });
+
+        this.dealingInProgress = false;
+        this.updatePlayerHands();
     }
 
-    startGame() {
-        this.dealCards();
+    async animateCardDeal(card, playerId, cardIndex) {
+        return new Promise(resolve => {
+            const dealingCard = document.createElement('div');
+            dealingCard.className = 'dealing-card';
+            
+            // Start from deck position
+            const deckArea = document.getElementById('deck-area');
+            deckArea.appendChild(dealingCard);
+            
+            // Get target position
+            const playerSection = document.getElementById(`player-${playerId}`);
+            const playerRect = playerSection.getBoundingClientRect();
+            const deckRect = deckArea.getBoundingClientRect();
+            
+            const targetX = playerRect.left + playerRect.width / 2 - deckRect.left;
+            const targetY = playerRect.top + playerRect.height / 2 - deckRect.top;
+            
+            // Animate to target
+            setTimeout(() => {
+                dealingCard.style.transform = `translate(${targetX - 30}px, ${targetY - 42}px)`;
+                dealingCard.style.opacity = '0.8';
+            }, 10);
+            
+            // Remove animation card and resolve
+            setTimeout(() => {
+                dealingCard.remove();
+                resolve();
+            }, 100 + cardIndex * 20); // Slight delay between cards
+        });
+    }
+
+    showPopupMessage(message) {
+        const popup = document.getElementById('popup-message');
+        const popupText = document.getElementById('popup-text');
+        
+        popupText.textContent = message;
+        popup.classList.remove('hidden');
+        popup.classList.add('show');
+        
+        setTimeout(() => {
+            popup.classList.add('hidden');
+            popup.classList.remove('show');
+        }, 2000);
+    }
+
+    async startGame() {
+        await this.dealCards();
         this.startBidding();
         this.updateDisplay();
     }
@@ -99,7 +162,7 @@ class Game {
     }
 
     makeBid(playerId, bid) {
-        if (playerId !== this.currentBidder) return false;
+        if (playerId !== this.currentBidder || this.dealingInProgress) return false;
 
         if (bid === 'pass') {
             this.passes.add(playerId);
@@ -107,6 +170,11 @@ class Game {
             this.bids[playerId] = bid;
             this.highestBid = bid;
             this.highestBidder = playerId;
+
+            // Show popup messages for specific bids
+            if (bid === 7) {
+                this.showPopupMessage('PUSSY ASS BITCH');
+            }
         } else {
             return false;
         }
@@ -116,14 +184,18 @@ class Game {
         // Check if bidding is complete
         if (this.passes.size >= 3 || (Object.keys(this.bids).length + this.passes.size) >= 4) {
             if (this.highestBidder !== null) {
+                // Show LUTFATTIG message if someone won the bid at 8
+                if (this.highestBid === 8) {
+                    this.showPopupMessage('LUTFATTIG');
+                }
                 this.phase = 'playing';
                 this.currentPlayer = this.highestBidder;
                 this.firstCardPlayed = false;
             } else {
                 // All passed, redeal
                 this.deck = this.createDeck();
-                this.dealCards();
-                this.startBidding();
+                this.startGame();
+                return true;
             }
         }
 
@@ -183,7 +255,7 @@ class Game {
     }
 
     playCard(playerId, cardData) {
-        if (playerId !== this.currentPlayer) return false;
+        if (playerId !== this.currentPlayer || this.dealingInProgress) return false;
 
         // Block card playing during partner selection phase
         if (this.phase === 'partner_selection') {
@@ -389,6 +461,12 @@ class Game {
             }
         }
 
+        // Check if bidding team failed
+        const biddingTeamFailed = biddingTeamTricks < this.highestBid;
+        if (biddingTeamFailed) {
+            this.showPopupMessage('DØDSKLEINT');
+        }
+
         // Award points
         if (biddingTeamTricks >= this.highestBid) {
             // Bidding team succeeded - both get positive points
@@ -421,7 +499,7 @@ class Game {
         this.phase = 'round_end';
     }
 
-    startNextRound() {
+    async startNextRound() {
         this.currentRound++;
         // Reset for next round
         this.deck = this.createDeck();
@@ -438,7 +516,7 @@ class Game {
         this.waitingForPartner = false;
         this.partnerId = null;
         
-        this.startGame();
+        await this.startGame();
     }
 
     updateDisplay() {
@@ -470,13 +548,16 @@ class Game {
     }
 
     updatePlayerHands() {
+        if (this.dealingInProgress) return;
+
         for (let playerId = 0; playerId < 4; playerId++) {
             const handContainer = document.querySelector(`[data-player="${playerId}"]`);
             handContainer.innerHTML = '';
             
             if (this.hands[playerId]) {
-                this.hands[playerId].forEach(card => {
+                this.hands[playerId].forEach((card, index) => {
                     const cardElement = this.createCardElement(card, playerId);
+                    cardElement.style.animationDelay = `${index * 0.05}s`;
                     handContainer.appendChild(cardElement);
                 });
             }
@@ -535,7 +616,6 @@ class Game {
         // Hide all controls
         document.getElementById('bidding-controls').classList.add('hidden');
         document.getElementById('partner-controls').classList.add('hidden');
-        document.getElementById('playing-controls').classList.add('hidden');
         document.getElementById('round-end-controls').classList.add('hidden');
 
         if (this.phase === 'bidding') {
@@ -547,9 +627,6 @@ class Game {
             document.getElementById('partner-winner').textContent = this.players[this.highestBidder].name;
             document.getElementById('trump-suit-display').textContent = this.getSuitName(this.trumpSuit);
         } else if (this.phase === 'playing') {
-            document.getElementById('playing-controls').classList.remove('hidden');
-            document.getElementById('current-player-name').textContent = this.players[this.currentPlayer].name;
-            
             // Show partner warning if applicable
             const warning = document.getElementById('partner-card-warning');
             if (this.waitingForPartner && 

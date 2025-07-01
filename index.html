@@ -24,6 +24,18 @@
             </div>
         </div>
 
+        <!-- Popup Message -->
+        <div class="popup-message hidden" id="popup-message">
+            <div class="popup-content">
+                <span id="popup-text"></span>
+            </div>
+        </div>
+
+        <!-- Card Dealing Animation Area -->
+        <div class="deck-area" id="deck-area">
+            <div class="deck-pile" id="deck-pile"></div>
+        </div>
+
         <!-- Bidding Controls -->
         <div class="controls" id="bidding-controls">
             <h3>Budgivning - <span id="current-bidder">Spiller 1</span> sin tur</h3>
@@ -47,12 +59,9 @@
             <button class="btn primary hidden" id="confirm-partner">Bekreft partner</button>
         </div>
 
-        <!-- Playing Controls -->
-        <div class="controls hidden" id="playing-controls">
-            <h3>Spilling - <span id="current-player-name">Spiller 1</span> sin tur</h3>
-            <div id="partner-card-warning" class="partner-warning hidden">
-                <strong>OBS!</strong> Partneren må spille det forespurte kortet: <span id="requested-card-display"></span>
-            </div>
+        <!-- Partner Card Warning (standalone) -->
+        <div id="partner-card-warning" class="partner-warning hidden">
+            <strong>OBS!</strong> Partneren må spille det forespurte kortet: <span id="requested-card-display"></span>
         </div>
 
         <!-- Trick Area -->
