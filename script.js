@@ -180,6 +180,7 @@ class Game {
         }
 
         this.phase = 'playing';
+        this.currentPlayer = (this.highestBidder + 1) % 4;
     }
 
     hasRequestedCard(playerId) {
@@ -190,8 +191,13 @@ class Game {
         );
     }
 
-    playCard(playerId, cardData) {
+        playCard(playerId, cardData) {
         if (playerId !== this.currentPlayer) return false;
+
+        // Block card playing during partner selection phase
+        if (this.phase === 'partner_selection') {
+            return false;
+        }
 
         // Check if partner must play requested card
         if (this.waitingForPartner && 
@@ -229,9 +235,10 @@ class Game {
                 playerName: this.players[playerId].name
             });
 
-            this.currentPlayer = (this.currentPlayer + 1) % 4;
+            // DON'T advance to next player yet - wait for partner selection
+            // this.currentPlayer = (this.currentPlayer + 1) % 4;
             
-            // Show partner selection
+            // Show partner selection and STOP here
             this.phase = 'partner_selection';
             this.updateDisplay();
             this.showPartnerSelection();
