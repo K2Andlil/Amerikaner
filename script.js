@@ -44,6 +44,8 @@ class Game {
         this.selectedPartnerCard = null;
         this.firstCardPlayed = false;
         this.waitingForPartner = false;
+        this.partnerPlayedRequestedCard = false;
+        this.partnerId = null;
 
         // Initialize scores and tricks
         this.players.forEach(player => {
@@ -158,19 +160,20 @@ class Game {
         // Set up teams
         this.teams = {};
         if (partnerId !== null) {
-            this.teams[this.highestBidder] = 'team1';
-            this.teams[partnerId] = 'team1';
+            this.teams[this.highestBidder] = 'bidder';
+            this.teams[partnerId] = 'partner';
+            this.partnerId = partnerId;
             for (const player of this.players) {
                 if (!(player.id in this.teams)) {
-                    this.teams[player.id] = 'solo';
+                    this.teams[player.id] = 'opponent';
                 }
             }
         } else {
             // If no partner found, bidder plays alone against all
-            this.teams[this.highestBidder] = 'team1';
+            this.teams[this.highestBidder] = 'bidder';
             for (const player of this.players) {
                 if (player.id !== this.highestBidder) {
-                    this.teams[player.id] = 'solo';
+                    this.teams[player.id] = 'opponent';
                 }
             }
         }
@@ -216,10 +219,11 @@ class Game {
         }
 
         // If we're waiting for partner to play the requested card
-        if (this.waitingForPartner && this.trumpCardRequest) {
+        if (this.waitingForPartner && this.trumpCardRequest && playerId === this.partnerId) {
             if (cardToPlay.suit === this.trumpCardRequest.suit && 
                 cardToPlay.rank === this.trumpCardRequest.rank) {
                 this.waitingForPartner = false;
+                this.partnerPlayedRequestedCard = true;
                 this.phase = 'playing';
             }
         }
@@ -261,29 +265,40 @@ class Game {
         const container = document.getElementById('partner-card-buttons');
         container.innerHTML = '';
 
-        // Create buttons for each rank in the trump suit
+        // Get cards that the bidder doesn't have in the trump suit
+        const bidderCards = this.hands[this.highestBidder];
+        const bidderTrumpRanks = new Set(
+            bidderCards
+                .filter(card => card.suit === this.trumpSuit)
+                .map(card => card.rank)
+        );
+
+        // Create buttons for each rank in the trump suit that bidder doesn't have
         const ranks = [14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2];
         const rankNames = {14: 'A', 13: 'K', 12: 'Q', 11: 'J'};
 
         ranks.forEach(rank => {
-            const button = document.createElement('button');
-            button.className = 'partner-card-btn';
-            button.dataset.rank = rank;
-            button.dataset.suit = this.trumpSuit;
-            
-            const rankDisplay = rankNames[rank] || rank.toString();
-            const suitSymbol = this.getSuitSymbol(this.trumpSuit);
-            button.textContent = `${rankDisplay}${suitSymbol}`;
-            
-            button.addEventListener('click', () => {
-                // Clear previous selection
-                document.querySelectorAll('.partner-card-btn').forEach(b => b.classList.remove('selected'));
-                button.classList.add('selected');
-                this.selectedPartnerCard = {suit: this.trumpSuit, rank: rank};
-                document.getElementById('confirm-partner').classList.remove('hidden');
-            });
-            
-            container.appendChild(button);
+            // Only show cards the bidder doesn't have
+            if (!bidderTrumpRanks.has(rank)) {
+                const button = document.createElement('button');
+                button.className = 'partner-card-btn';
+                button.dataset.rank = rank;
+                button.dataset.suit = this.trumpSuit;
+                
+                const rankDisplay = rankNames[rank] || rank.toString();
+                const suitSymbol = this.getSuitSymbol(this.trumpSuit);
+                button.textContent = `${rankDisplay}${suitSymbol}`;
+                
+                button.addEventListener('click', () => {
+                    // Clear previous selection
+                    document.querySelectorAll('.partner-card-btn').forEach(b => b.classList.remove('selected'));
+                    button.classList.add('selected');
+                    this.selectedPartnerCard = {suit: this.trumpSuit, rank: rank};
+                    document.getElementById('confirm-partner').classList.remove('hidden');
+                });
+                
+                container.appendChild(button);
+            }
         });
     }
 
@@ -340,37 +355,42 @@ class Game {
     }
 
     completeRound() {
-        // Calculate scores
-        let team1Tricks = 0;
+        // Calculate scores - combine tricks for bidding team
+        let biddingTeamTricks = 0;
         if (this.highestBidder in this.teams) {
             for (const [playerId, team] of Object.entries(this.teams)) {
-                if (team === 'team1') {
-                    team1Tricks += this.tricksWon[parseInt(playerId)];
+                if (team === 'bidder' || team === 'partner') {
+                    biddingTeamTricks += this.tricksWon[parseInt(playerId)];
                 }
             }
         }
 
         // Award points
-        if (team1Tricks >= this.highestBid) {
-            // Team1 succeeded
+        if (biddingTeamTricks >= this.highestBid) {
+            // Bidding team succeeded - both get positive points
             for (const [playerId, team] of Object.entries(this.teams)) {
-                if (team === 'team1') {
+                if (team === 'bidder' || team === 'partner') {
                     this.scores[parseInt(playerId)] += this.highestBid;
                 }
             }
-        } else {
-            // Team1 failed, solo players get points
+            // Opponents get points for their individual tricks
             for (const [playerId, team] of Object.entries(this.teams)) {
-                if (team === 'solo') {
+                if (team === 'opponent') {
                     this.scores[parseInt(playerId)] += this.tricksWon[parseInt(playerId)];
                 }
             }
-        }
-
-        // Solo players always get points for tricks taken
-        for (const [playerId, team] of Object.entries(this.teams)) {
-            if (team === 'solo') {
-                this.scores[parseInt(playerId)] += this.tricksWon[parseInt(playerId)];
+        } else {
+            // Bidding team failed - get negative points
+            for (const [playerId, team] of Object.entries(this.teams)) {
+                if (team === 'bidder' || team === 'partner') {
+                    this.scores[parseInt(playerId)] -= this.highestBid;
+                }
+            }
+            // Opponents get points for their individual tricks
+            for (const [playerId, team] of Object.entries(this.teams)) {
+                if (team === 'opponent') {
+                    this.scores[parseInt(playerId)] += this.tricksWon[parseInt(playerId)];
+                }
             }
         }
 
@@ -392,6 +412,8 @@ class Game {
         this.selectedPartnerCard = null;
         this.firstCardPlayed = false;
         this.waitingForPartner = false;
+        this.partnerPlayedRequestedCard = false;
+        this.partnerId = null;
         
         this.startGame();
     }
@@ -441,10 +463,47 @@ class Game {
             
             // Highlight current player
             const playerSection = document.getElementById(`player-${playerId}`);
+            playerSection.classList.remove('current-player', 'team-bidder', 'team-partner', 'team-opponent');
+            
             if ((this.phase === 'playing' || this.phase === 'partner_selection') && this.currentPlayer === playerId) {
                 playerSection.classList.add('current-player');
+            }
+            
+            // Add team styling
+            if (this.teams[playerId]) {
+                if (this.teams[playerId] === 'bidder') {
+                    playerSection.classList.add('team-bidder');
+                } else if (this.teams[playerId] === 'partner') {
+                    playerSection.classList.add('team-partner');
+                } else if (this.teams[playerId] === 'opponent') {
+                    playerSection.classList.add('team-opponent');
+                }
+            }
+        }
+        
+        // Update team indicators
+        this.updateTeamIndicators();
+    }
+
+    updateTeamIndicators() {
+        for (let playerId = 0; playerId < 4; playerId++) {
+            const indicator = document.getElementById(`team-indicator-${playerId}`);
+            if (this.teams[playerId]) {
+                indicator.classList.remove('hidden');
+                indicator.classList.remove('bidder', 'partner', 'opponent');
+                
+                if (this.teams[playerId] === 'bidder') {
+                    indicator.textContent = 'Budgiver';
+                    indicator.classList.add('bidder');
+                } else if (this.teams[playerId] === 'partner') {
+                    indicator.textContent = 'Partner';
+                    indicator.classList.add('partner');
+                } else if (this.teams[playerId] === 'opponent') {
+                    indicator.textContent = 'Motstander';
+                    indicator.classList.add('opponent');
+                }
             } else {
-                playerSection.classList.remove('current-player');
+                indicator.classList.add('hidden');
             }
         }
     }
@@ -515,13 +574,25 @@ class Game {
         let resultText = '';
         
         if (this.highestBidder !== null) {
-            const team1Tricks = Object.entries(this.teams)
-                .filter(([_, team]) => team === 'team1')
-                .reduce((sum, [playerId, _]) => sum + (this.tricksWon[parseInt(playerId)] || 0), 0);
+            // Calculate combined tricks for bidding team
+            let biddingTeamTricks = 0;
+            for (const [playerId, team] of Object.entries(this.teams)) {
+                if (team === 'bidder' || team === 'partner') {
+                    biddingTeamTricks += this.tricksWon[parseInt(playerId)] || 0;
+                }
+            }
             
-            const success = team1Tricks >= this.highestBid;
-            resultText = `${this.players[this.highestBidder].name} budde ${this.highestBid} og tok ${team1Tricks} stikk. `;
+            const success = biddingTeamTricks >= this.highestBid;
+            const partnerName = this.partnerId !== null ? this.players[this.partnerId].name : 'ingen';
+            
+            resultText = `${this.players[this.highestBidder].name} (med ${partnerName}) budde ${this.highestBid} og tok ${biddingTeamTricks} stikk sammen. `;
             resultText += success ? 'Maktet!' : 'Feilet!';
+            
+            if (!success) {
+                resultText += ` (-${this.highestBid} poeng)`;
+            } else {
+                resultText += ` (+${this.highestBid} poeng)`;
+            }
         }
         
         resultsElement.textContent = resultText;
