@@ -96,7 +96,7 @@ header {
     color: #333;
     font-weight: bold;
     user-select: none;
-    font-size: 0.8rem;
+    font-size: 1.6rem;
 }
 
 .card:hover {
@@ -121,6 +121,16 @@ header {
 
 .card.clubs, .card.spades {
     color: #2c3e50;
+}
+
+.card-rank {
+    font-size: 1.6rem;
+    line-height: 1;
+}
+
+.card-suit {
+    font-size: 2rem;
+    line-height: 1;
 }
 
 .controls {
@@ -172,30 +182,30 @@ header {
     margin: 0 auto;
 }
 
-.suit-buttons {
+.partner-selection {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    max-width: 400px;
-    margin: 0 auto;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    max-width: 600px;
+    margin: 20px auto;
 }
 
-.suit-btn {
-    padding: 15px;
-    font-size: 1.2rem;
+.partner-card-btn {
+    padding: 10px;
+    font-size: 1rem;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     background: rgba(255, 255, 255, 0.1);
     color: white;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.suit-btn:hover {
+.partner-card-btn:hover {
     background: rgba(255, 255, 255, 0.2);
 }
 
-.suit-btn.selected {
+.partner-card-btn.selected {
     background: #4CAF50;
 }
 
@@ -257,6 +267,14 @@ select {
     .card {
         width: 40px;
         height: 60px;
-        font-size: 0.7rem;
+        font-size: 1.4rem;
+    }
+
+    .card-rank {
+        font-size: 1.4rem;
+    }
+
+    .card-suit {
+        font-size: 1.8rem;
     }
 }

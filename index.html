@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Amerikaner - Test Spillogikk</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
@@ -47,35 +47,14 @@
             </div>
         </div>
 
-        <!-- Trump Selection Controls -->
-        <div class="controls hidden" id="trump-controls">
-            <h3>Velg trumf og partner - <span id="trump-winner">Spiller X</span> vant med <span id="winning-bid">X</span></h3>
-            <div class="suit-buttons">
-                <button class="suit-btn" data-suit="hearts">♥️ Hjerter</button>
-                <button class="suit-btn" data-suit="diamonds">♦️ Ruter</button>
-                <button class="suit-btn" data-suit="clubs">♣️ Kløver</button>
-                <button class="suit-btn" data-suit="spades">♠️ Spar</button>
+        <!-- Partner Selection Controls -->
+        <div class="controls hidden" id="partner-controls">
+            <h3>Velg partner - <span id="partner-winner">Spiller X</span></h3>
+            <p>Du satte trumf til <span id="trump-suit-display">-</span>. Velg hvilket kort du vil ha som partner:</p>
+            <div class="partner-selection" id="partner-card-buttons">
+                <!-- Partner card buttons will be populated here -->
             </div>
-            <div style="margin-top: 15px;">
-                <label>Be om kort:</label>
-                <select id="request-suit">
-                    <option value="hearts">♥️ Hjerter</option>
-                    <option value="diamonds">♦️ Ruter</option>
-                    <option value="clubs">♣️ Kløver</option>
-                    <option value="spades">♠️ Spar</option>
-                </select>
-                <select id="request-rank">
-                    <option value="14">Ess</option>
-                    <option value="13">Konge</option>
-                    <option value="12">Dame</option>
-                    <option value="11">Knekt</option>
-                    <option value="10">10</option>
-                    <option value="9">9</option>
-                    <option value="8">8</option>
-                    <option value="7">7</option>
-                </select>
-                <button class="btn primary" id="confirm-trump">Bekreft</button>
-            </div>
+            <button class="btn primary hidden" id="confirm-partner">Bekreft partner</button>
         </div>
 
         <!-- Playing Controls -->

@@ -41,7 +41,9 @@ class Game {
         this.currentPlayer = 0;
         this.passes = new Set();
         this.leadSuit = null;
-        this.selectedTrumpSuit = null;
+        this.selectedPartnerCard = null;
+        this.firstCardPlayed = false;
+        this.waitingForPartner = false;
 
         // Initialize scores and tricks
         this.players.forEach(player => {
@@ -118,10 +120,12 @@ class Game {
         this.currentBidder = (this.currentBidder + 1) % 4;
 
         // Check if bidding is complete
-        const activePlayers = 4 - this.passes.size;
         if (this.passes.size >= 3 || (Object.keys(this.bids).length + this.passes.size) >= 4) {
             if (this.highestBidder !== null) {
-                this.phase = 'trump_selection';
+                this.phase = 'playing';
+                this.currentPlayer = this.highestBidder;
+                this.trickStarter = this.currentPlayer;
+                this.firstCardPlayed = false;
             } else {
                 // All passed, redeal
                 this.deck = this.createDeck();
@@ -133,16 +137,16 @@ class Game {
         return true;
     }
 
-    selectTrumpAndPartner(trumpSuit, requestedCard) {
-        this.trumpSuit = trumpSuit;
-        this.trumpCardRequest = requestedCard;
+    selectPartnerCard(cardData) {
+        this.selectedPartnerCard = cardData;
+        this.trumpCardRequest = cardData;
 
         // Find partner based on requested card
         let partnerId = null;
         for (const playerId of Object.keys(this.hands)) {
             if (parseInt(playerId) !== this.highestBidder) {
                 for (const card of this.hands[playerId]) {
-                    if (card.suit === requestedCard.suit && card.rank === requestedCard.rank) {
+                    if (card.suit === cardData.suit && card.rank === cardData.rank) {
                         partnerId = parseInt(playerId);
                         break;
                     }
@@ -172,8 +176,7 @@ class Game {
         }
 
         this.phase = 'playing';
-        this.currentPlayer = this.highestBidder;
-        this.trickStarter = this.currentPlayer;
+        this.waitingForPartner = false;
     }
 
     playCard(playerId, cardData) {
@@ -190,6 +193,36 @@ class Game {
         }
 
         if (!cardToPlay) return false;
+
+        // If this is the first card played by the bidder, set trump suit
+        if (!this.firstCardPlayed && playerId === this.highestBidder) {
+            this.trumpSuit = cardToPlay.suit;
+            this.firstCardPlayed = true;
+            this.leadSuit = cardToPlay.suit;
+            
+            this.currentTrick.push({
+                playerId: playerId,
+                card: cardToPlay,
+                playerName: this.players[playerId].name
+            });
+
+            this.currentPlayer = (this.currentPlayer + 1) % 4;
+            
+            // Show partner selection
+            this.phase = 'partner_selection';
+            this.updateDisplay();
+            this.showPartnerSelection();
+            return true;
+        }
+
+        // If we're waiting for partner to play the requested card
+        if (this.waitingForPartner && this.trumpCardRequest) {
+            if (cardToPlay.suit === this.trumpCardRequest.suit && 
+                cardToPlay.rank === this.trumpCardRequest.rank) {
+                this.waitingForPartner = false;
+                this.phase = 'playing';
+            }
+        }
 
         // Validate play (must follow suit if possible)
         if (this.currentTrick.length > 0) {
@@ -222,6 +255,46 @@ class Game {
 
     hasSuit(playerId, suit) {
         return this.hands[playerId].some(card => card.suit === suit);
+    }
+
+    showPartnerSelection() {
+        const container = document.getElementById('partner-card-buttons');
+        container.innerHTML = '';
+
+        // Create buttons for each rank in the trump suit
+        const ranks = [14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2];
+        const rankNames = {14: 'A', 13: 'K', 12: 'Q', 11: 'J'};
+
+        ranks.forEach(rank => {
+            const button = document.createElement('button');
+            button.className = 'partner-card-btn';
+            button.dataset.rank = rank;
+            button.dataset.suit = this.trumpSuit;
+            
+            const rankDisplay = rankNames[rank] || rank.toString();
+            const suitSymbol = this.getSuitSymbol(this.trumpSuit);
+            button.textContent = `${rankDisplay}${suitSymbol}`;
+            
+            button.addEventListener('click', () => {
+                // Clear previous selection
+                document.querySelectorAll('.partner-card-btn').forEach(b => b.classList.remove('selected'));
+                button.classList.add('selected');
+                this.selectedPartnerCard = {suit: this.trumpSuit, rank: rank};
+                document.getElementById('confirm-partner').classList.remove('hidden');
+            });
+            
+            container.appendChild(button);
+        });
+    }
+
+    getSuitSymbol(suit) {
+        const symbols = {
+            hearts: '♥',
+            diamonds: '♦',
+            clubs: '♣',
+            spades: '♠'
+        };
+        return symbols[suit] || suit;
     }
 
     completeTrick() {
@@ -316,7 +389,9 @@ class Game {
         this.currentTrick = [];
         this.trumpSuit = null;
         this.trumpCardRequest = null;
-        this.selectedTrumpSuit = null;
+        this.selectedPartnerCard = null;
+        this.firstCardPlayed = false;
+        this.waitingForPartner = false;
         
         this.startGame();
     }
@@ -334,7 +409,7 @@ class Game {
         const indicator = document.getElementById('phase-indicator');
         const phaseNames = {
             'bidding': 'Budgivning',
-            'trump_selection': 'Trumfvalg',
+            'partner_selection': 'Velg partner',
             'playing': 'Spilling',
             'round_end': 'Runde ferdig'
         };
@@ -366,7 +441,7 @@ class Game {
             
             // Highlight current player
             const playerSection = document.getElementById(`player-${playerId}`);
-            if (this.phase === 'playing' && this.currentPlayer === playerId) {
+            if ((this.phase === 'playing' || this.phase === 'partner_selection') && this.currentPlayer === playerId) {
                 playerSection.classList.add('current-player');
             } else {
                 playerSection.classList.remove('current-player');
@@ -377,7 +452,7 @@ class Game {
     updateControls() {
         // Hide all controls
         document.getElementById('bidding-controls').classList.add('hidden');
-        document.getElementById('trump-controls').classList.add('hidden');
+        document.getElementById('partner-controls').classList.add('hidden');
         document.getElementById('playing-controls').classList.add('hidden');
         document.getElementById('round-end-controls').classList.add('hidden');
 
@@ -385,10 +460,10 @@ class Game {
             document.getElementById('bidding-controls').classList.remove('hidden');
             document.getElementById('current-bidder').textContent = this.players[this.currentBidder].name;
             this.updateBidButtons();
-        } else if (this.phase === 'trump_selection') {
-            document.getElementById('trump-controls').classList.remove('hidden');
-            document.getElementById('trump-winner').textContent = this.players[this.highestBidder].name;
-            document.getElementById('winning-bid').textContent = this.highestBid;
+        } else if (this.phase === 'partner_selection') {
+            document.getElementById('partner-controls').classList.remove('hidden');
+            document.getElementById('partner-winner').textContent = this.players[this.highestBidder].name;
+            document.getElementById('trump-suit-display').textContent = this.getSuitName(this.trumpSuit);
         } else if (this.phase === 'playing') {
             document.getElementById('playing-controls').classList.remove('hidden');
             document.getElementById('current-player-name').textContent = this.players[this.currentPlayer].name;
@@ -456,7 +531,7 @@ class Game {
         const cardDiv = document.createElement('div');
         cardDiv.className = `card ${card.suit}`;
 
-        if (clickable && this.phase === 'playing' && playerId === this.currentPlayer) {
+        if (clickable && (this.phase === 'playing' || this.phase === 'partner_selection') && playerId === this.currentPlayer) {
             cardDiv.classList.add('playable');
             cardDiv.addEventListener('click', () => {
                 this.playCard(playerId, card.toDict());
@@ -515,25 +590,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Trump selection
-    document.querySelectorAll('.suit-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Clear previous selection
-            document.querySelectorAll('.suit-btn').forEach(b => b.classList.remove('selected'));
-            this.classList.add('selected');
-            game.selectedTrumpSuit = this.dataset.suit;
-        });
-    });
-
-    document.getElementById('confirm-trump').addEventListener('click', function() {
-        if (game.selectedTrumpSuit) {
-            const requestSuit = document.getElementById('request-suit').value;
-            const requestRank = parseInt(document.getElementById('request-rank').value);
-            
-            game.selectTrumpAndPartner(game.selectedTrumpSuit, {
-                suit: requestSuit,
-                rank: requestRank
-            });
+    // Partner selection confirmation
+    document.getElementById('confirm-partner').addEventListener('click', function() {
+        if (game.selectedPartnerCard) {
+            game.selectPartnerCard(game.selectedPartnerCard);
             game.updateDisplay();
         }
     });
