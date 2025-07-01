@@ -79,11 +79,11 @@ class Game {
                 this.hands[playerId].push(this.deck.pop());
             }
         }
-        // Sort hands
+        // Sort hands with new order: diamonds, spades, hearts, clubs
         Object.keys(this.hands).forEach(playerId => {
             this.hands[playerId].sort((a, b) => {
                 if (a.suit !== b.suit) {
-                    const suitOrder = ['clubs', 'diamonds', 'hearts', 'spades'];
+                    const suitOrder = ['diamonds', 'spades', 'hearts', 'clubs'];
                     return suitOrder.indexOf(a.suit) - suitOrder.indexOf(b.suit);
                 }
                 return a.rank - b.rank;
@@ -163,6 +163,7 @@ class Game {
             this.teams[this.highestBidder] = 'bidder';
             this.teams[partnerId] = 'partner';
             this.partnerId = partnerId;
+            this.waitingForPartner = true;
             for (const player of this.players) {
                 if (!(player.id in this.teams)) {
                     this.teams[player.id] = 'opponent';
@@ -179,11 +180,30 @@ class Game {
         }
 
         this.phase = 'playing';
-        this.waitingForPartner = false;
+    }
+
+    hasRequestedCard(playerId) {
+        if (!this.trumpCardRequest) return false;
+        return this.hands[playerId].some(card => 
+            card.suit === this.trumpCardRequest.suit && 
+            card.rank === this.trumpCardRequest.rank
+        );
     }
 
     playCard(playerId, cardData) {
         if (playerId !== this.currentPlayer) return false;
+
+        // Check if partner must play requested card
+        if (this.waitingForPartner && 
+            playerId === this.partnerId && 
+            this.hasRequestedCard(playerId)) {
+            
+            // Partner must play the requested card if they have it
+            if (cardData.suit !== this.trumpCardRequest.suit || 
+                cardData.rank !== this.trumpCardRequest.rank) {
+                return false; // Invalid play - must play requested card
+            }
+        }
 
         // Find and remove card from player's hand
         let cardToPlay = null;
@@ -219,13 +239,14 @@ class Game {
         }
 
         // If we're waiting for partner to play the requested card
-        if (this.waitingForPartner && this.trumpCardRequest && playerId === this.partnerId) {
-            if (cardToPlay.suit === this.trumpCardRequest.suit && 
-                cardToPlay.rank === this.trumpCardRequest.rank) {
-                this.waitingForPartner = false;
-                this.partnerPlayedRequestedCard = true;
-                this.phase = 'playing';
-            }
+        if (this.waitingForPartner && 
+            this.trumpCardRequest && 
+            playerId === this.partnerId &&
+            cardToPlay.suit === this.trumpCardRequest.suit && 
+            cardToPlay.rank === this.trumpCardRequest.rank) {
+            
+            this.waitingForPartner = false;
+            this.partnerPlayedRequestedCard = true;
         }
 
         // Validate play (must follow suit if possible)
@@ -234,6 +255,7 @@ class Game {
                 if (cardToPlay.suit !== this.leadSuit) {
                     // Invalid play - put card back
                     this.hands[playerId].push(cardToPlay);
+                    this.sortHand(playerId);
                     return false;
                 }
             }
@@ -255,6 +277,16 @@ class Game {
         }
 
         return true;
+    }
+
+    sortHand(playerId) {
+        this.hands[playerId].sort((a, b) => {
+            if (a.suit !== b.suit) {
+                const suitOrder = ['diamonds', 'spades', 'hearts', 'clubs'];
+                return suitOrder.indexOf(a.suit) - suitOrder.indexOf(b.suit);
+            }
+            return a.rank - b.rank;
+        });
     }
 
     hasSuit(playerId, suit) {
@@ -526,6 +558,20 @@ class Game {
         } else if (this.phase === 'playing') {
             document.getElementById('playing-controls').classList.remove('hidden');
             document.getElementById('current-player-name').textContent = this.players[this.currentPlayer].name;
+            
+            // Show partner warning if applicable
+            const warning = document.getElementById('partner-card-warning');
+            if (this.waitingForPartner && 
+                this.currentPlayer === this.partnerId && 
+                this.hasRequestedCard(this.partnerId)) {
+                warning.classList.remove('hidden');
+                const rankNames = {14: 'A', 13: 'K', 12: 'Q', 11: 'J'};
+                const rankDisplay = rankNames[this.trumpCardRequest.rank] || this.trumpCardRequest.rank.toString();
+                const suitSymbol = this.getSuitSymbol(this.trumpCardRequest.suit);
+                document.getElementById('requested-card-display').textContent = `${rankDisplay}${suitSymbol}`;
+            } else {
+                warning.classList.add('hidden');
+            }
         } else if (this.phase === 'round_end') {
             document.getElementById('round-end-controls').classList.remove('hidden');
             this.updateRoundResults();
@@ -601,6 +647,15 @@ class Game {
     createCardElement(card, playerId, clickable = true) {
         const cardDiv = document.createElement('div');
         cardDiv.className = `card ${card.suit}`;
+
+        // Special highlighting for partner's requested card
+        if (this.waitingForPartner && 
+            playerId === this.partnerId && 
+            this.trumpCardRequest &&
+            card.suit === this.trumpCardRequest.suit && 
+            card.rank === this.trumpCardRequest.rank) {
+            cardDiv.classList.add('forced');
+        }
 
         if (clickable && (this.phase === 'playing' || this.phase === 'partner_selection') && playerId === this.currentPlayer) {
             cardDiv.classList.add('playable');
